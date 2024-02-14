@@ -171,7 +171,7 @@ impl SessionStore for LibsqlStore {
         if let Ok(Some(data)) = data.next().await {
             Ok(Some(
                 rmp_serde::from_slice(
-                    &data
+                    data
                         .get_value(0)
                         .map_err(LibsqlStoreError::Libsql)
                         .unwrap()
@@ -232,7 +232,7 @@ mod libsql_store_tests {
             select * from tower_sessions limit 1
         "#;
 
-        let row = conn.query(&query, ()).await.unwrap().next().await.unwrap();
+        let row = conn.query(query, ()).await.unwrap().next().await.unwrap();
 
         assert!(row.is_none());
     }

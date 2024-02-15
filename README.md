@@ -7,3 +7,5 @@ libSQL is a fork of SQLite, that is accessible over network requests. Ideally I 
 ## Usage
 
 See [`/examples`](./examples) folder.
+
+Note the `embedded_replica` example requires a live turso database to use for embedded replication. Install the [turso cli](https://github.com/tursodatabase/turso-cli) and run `turso dev`.

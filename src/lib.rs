@@ -1,5 +1,4 @@
 #![doc = include_str!("../README.md")]
-
 use async_trait::async_trait;
 use libsql::params;
 use time::OffsetDateTime;
@@ -9,7 +8,7 @@ use tower_sessions_core::{
     SessionStore,
 };
 
-/// An error type for SQLx stores.
+/// An error type for libSQL stores.
 #[derive(thiserror::Error, Debug)]
 pub enum LibsqlStoreError {
     /// A variant to map `libsql` errors.
@@ -35,7 +34,7 @@ impl From<LibsqlStoreError> for session_store::Error {
     }
 }
 
-/// A Libsql session store.
+/// A libSQL session store.
 #[derive(Clone)]
 pub struct LibsqlStore {
     connection: libsql::Connection,
@@ -43,23 +42,18 @@ pub struct LibsqlStore {
 }
 
 // Need this since connection does not implement Debug
-// TODO figure out nicer way
 impl std::fmt::Debug for LibsqlStore {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LibsqlStore")
+            // Probably want to handle this differently
+            .field("connection", &std::any::type_name::<libsql::Connection>())
             .field("table_name", &self.table_name)
             .finish()
     }
 }
 
 impl LibsqlStore {
-    // TODO Update
-    /// Create a new SQLite store with the provided connection pool.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// ```
+    /// Create a new libSQL store with the provided connection pool.
     pub fn new(client: libsql::Connection) -> Self {
         Self {
             connection: client,
@@ -138,7 +132,7 @@ impl SessionStore for LibsqlStore {
                 params![
                     record.id.to_string(),
                     rmp_serde::to_vec(record).map_err(LibsqlStoreError::Encode)?,
-                    record.expiry_date.to_string() //TODO probably wrong.
+                    record.expiry_date.unix_timestamp()
                 ],
             )
             .await
@@ -162,7 +156,7 @@ impl SessionStore for LibsqlStore {
                 &query,
                 params![
                     session_id.to_string(),
-                    OffsetDateTime::now_utc().to_string() // TODO: Probably wrong
+                    OffsetDateTime::now_utc().unix_timestamp()
                 ],
             )
             .await
@@ -171,8 +165,7 @@ impl SessionStore for LibsqlStore {
         if let Ok(Some(data)) = data.next().await {
             Ok(Some(
                 rmp_serde::from_slice(
-                    &data
-                        .get_value(0)
+                    data.get_value(0)
                         .map_err(LibsqlStoreError::Libsql)
                         .unwrap()
                         .as_blob()
@@ -232,7 +225,7 @@ mod libsql_store_tests {
             select * from tower_sessions limit 1
         "#;
 
-        let row = conn.query(&query, ()).await.unwrap().next().await.unwrap();
+        let row = conn.query(query, ()).await.unwrap().next().await.unwrap();
 
         assert!(row.is_none());
     }

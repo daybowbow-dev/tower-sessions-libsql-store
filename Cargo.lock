@@ -1418,7 +1418,7 @@ dependencies = [
 [[package]]
 name = "libsql"
 version = "0.2.0"
-source = "git+https://github.com/tursodatabase/libsql/#71a7cfc7274145b147ccb6531a6debffc6e06221"
+source = "git+https://github.com/tursodatabase/libsql/?rev=eb7dadd#eb7dadd6a0bf5e6b642982d91a01f3d41a1715b7"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -1454,7 +1454,7 @@ dependencies = [
 [[package]]
 name = "libsql-ffi"
 version = "0.1.0"
-source = "git+https://github.com/tursodatabase/libsql/#71a7cfc7274145b147ccb6531a6debffc6e06221"
+source = "git+https://github.com/tursodatabase/libsql/?rev=eb7dadd#eb7dadd6a0bf5e6b642982d91a01f3d41a1715b7"
 dependencies = [
  "bindgen",
  "cc",
@@ -1464,7 +1464,7 @@ dependencies = [
 [[package]]
 name = "libsql-rusqlite"
 version = "0.29.0"
-source = "git+https://github.com/tursodatabase/libsql/#71a7cfc7274145b147ccb6531a6debffc6e06221"
+source = "git+https://github.com/tursodatabase/libsql/?rev=eb7dadd#eb7dadd6a0bf5e6b642982d91a01f3d41a1715b7"
 dependencies = [
  "bitflags 2.4.2",
  "fallible-iterator 0.2.0",
@@ -1477,7 +1477,7 @@ dependencies = [
 [[package]]
 name = "libsql-sqlite3-parser"
 version = "0.11.1"
-source = "git+https://github.com/tursodatabase/libsql/#71a7cfc7274145b147ccb6531a6debffc6e06221"
+source = "git+https://github.com/tursodatabase/libsql/?rev=eb7dadd#eb7dadd6a0bf5e6b642982d91a01f3d41a1715b7"
 dependencies = [
  "bitflags 2.4.2",
  "cc",
@@ -1495,7 +1495,7 @@ dependencies = [
 [[package]]
 name = "libsql-sys"
 version = "0.3.0"
-source = "git+https://github.com/tursodatabase/libsql/#71a7cfc7274145b147ccb6531a6debffc6e06221"
+source = "git+https://github.com/tursodatabase/libsql/?rev=eb7dadd#eb7dadd6a0bf5e6b642982d91a01f3d41a1715b7"
 dependencies = [
  "base64",
  "bytes",
@@ -1521,7 +1521,7 @@ dependencies = [
 [[package]]
 name = "libsql_replication"
 version = "0.2.0"
-source = "git+https://github.com/tursodatabase/libsql/#71a7cfc7274145b147ccb6531a6debffc6e06221"
+source = "git+https://github.com/tursodatabase/libsql/?rev=eb7dadd#eb7dadd6a0bf5e6b642982d91a01f3d41a1715b7"
 dependencies = [
  "aes",
  "async-stream",

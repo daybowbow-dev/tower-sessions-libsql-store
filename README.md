@@ -6,4 +6,4 @@ libSQL is a fork of SQLite, that is accessible over network requests. Ideally I 
 
 ## Usage
 
-See [`/examples`]('./examples') folder.
+See [`/examples`](./examples) folder.

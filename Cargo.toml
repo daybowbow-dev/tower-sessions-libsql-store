@@ -2,7 +2,14 @@
 name = "tower-sessions-libsql-store"
 version = "0.1.0"
 edition = "2021"
+authors = ["Mike Worthley <mike@daybowbow.dev>"]
 license = "MIT"
+homepage = "https://github.com/daybowbow-dev/tower-sessions-libsql-store"
+keywords = ["axum", "sessions", "cookie", "tower", "libsql"]
+categories = ["asynchronous", "network-programming", "web-programming"]
+repository = "https://github.com/daybowbow-dev/tower-sessions-libsql-store"
+documentation = "https://docs.rs/tower-sessions-libsql-store"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

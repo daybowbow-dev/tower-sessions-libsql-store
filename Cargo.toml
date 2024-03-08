@@ -9,6 +9,7 @@ keywords = ["axum", "sessions", "cookie", "tower", "libsql"]
 categories = ["asynchronous", "network-programming", "web-programming"]
 repository = "https://github.com/daybowbow-dev/tower-sessions-libsql-store"
 documentation = "https://docs.rs/tower-sessions-libsql-store"
+description = "A small library for using tower-sessions with libsql"
 readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

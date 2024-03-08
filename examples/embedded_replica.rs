@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "http://127.0.0.1:8080".to_string(),
         "".to_string(),
     )
-    .periodic_sync(tokio::time::Duration::from_secs(1))
+    .sync_interval(tokio::time::Duration::from_secs(1))
     .read_your_writes(true)
     .build()
     .await
@@ -38,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let deletion_task = tokio::task::spawn(
         session_store
             .clone()
-            .continuously_delete_expired(tokio::time::Duration::from_secs(60)),
+            .continuously_delete_expired(tokio::time::Duration::from_secs(5)),
     );
 
     let session_layer = SessionManagerLayer::new(session_store)

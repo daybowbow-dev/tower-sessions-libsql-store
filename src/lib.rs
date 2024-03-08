@@ -101,7 +101,7 @@ impl ExpiredDeletion for LibsqlStore {
         let query = format!(
             r#"
             delete from {table_name}
-            where expiry_date < datetime('now', 'utc')
+            where expiry_date < unixepoch('now')
             "#,
             table_name = self.table_name
         );

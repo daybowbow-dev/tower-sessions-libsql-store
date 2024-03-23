@@ -1,4 +1,6 @@
 #![doc = include_str!("../README.md")]
+use std::ops::Deref;
+
 use async_trait::async_trait;
 use libsql::params;
 use time::OffsetDateTime;
@@ -72,7 +74,7 @@ impl LibsqlStore {
             ));
         }
 
-        self.table_name = table_name.to_owned();
+        table_name.clone_into(&mut self.table_name);
         Ok(self)
     }
 
@@ -90,6 +92,58 @@ impl LibsqlStore {
             self.table_name
         );
         self.connection.execute(&query, ()).await?;
+
+        Ok(())
+    }
+
+    async fn id_exists(&self, conn: &libsql::Connection, id: &Id) -> session_store::Result<bool> {
+        let query = format!(
+            r#"
+            select exists(select 1 from {table_name} where id = ?)
+            "#,
+            table_name = self.table_name
+        );
+
+        let res = conn
+            .query(&query, params![id.to_string()])
+            .await
+            .map_err(LibsqlStoreError::Libsql)
+            .unwrap()
+            .next()
+            .await
+            .unwrap()
+            .unwrap()
+            .get_value(0)
+            .unwrap();
+
+        Ok(res == libsql::Value::Integer(1))
+    }
+
+    async fn save_with_conn(
+        &self,
+        conn: &libsql::Connection,
+        record: &Record,
+    ) -> session_store::Result<()> {
+        let query = format!(
+            r#"
+            insert into {}
+              (id, data, expiry_date) values (?, ?, ?)
+            on conflict(id) do update set
+              data = excluded.data,
+              expiry_date = excluded.expiry_date
+            "#,
+            self.table_name
+        );
+        conn.execute(
+            &query,
+            params![
+                record.id.to_string(),
+                rmp_serde::to_vec(record).map_err(LibsqlStoreError::Encode)?,
+                record.expiry_date.unix_timestamp()
+            ],
+        )
+        .await
+        .map_err(LibsqlStoreError::Libsql)?;
 
         Ok(())
     }
@@ -115,30 +169,23 @@ impl ExpiredDeletion for LibsqlStore {
 
 #[async_trait]
 impl SessionStore for LibsqlStore {
-    async fn save(&self, record: &Record) -> session_store::Result<()> {
-        let query = format!(
-            r#"
-            insert into {}
-              (id, data, expiry_date) values (?, ?, ?)
-            on conflict(id) do update set
-              data = excluded.data,
-              expiry_date = excluded.expiry_date
-            "#,
-            self.table_name
-        );
-        self.connection
-            .execute(
-                &query,
-                params![
-                    record.id.to_string(),
-                    rmp_serde::to_vec(record).map_err(LibsqlStoreError::Encode)?,
-                    record.expiry_date.unix_timestamp()
-                ],
-            )
-            .await
-            .map_err(LibsqlStoreError::Libsql)?;
+    async fn create(&self, record: &mut Record) -> session_store::Result<()> {
+        let tx = self.connection.transaction().await.unwrap();
+
+        while self.id_exists(tx.deref(), &record.id).await? {
+            record.id = Id::default() // Generate a new id
+        }
+
+        self.save_with_conn(tx.deref(), record).await?;
+
+        tx.commit().await.map_err(LibsqlStoreError::Libsql)?;
 
         Ok(())
+    }
+
+    async fn save(&self, record: &Record) -> session_store::Result<()> {
+        let conn = self.connection.clone();
+        self.save_with_conn(&conn, record).await
     }
 
     async fn load(&self, session_id: &Id) -> session_store::Result<Option<Record>> {
@@ -228,6 +275,62 @@ mod libsql_store_tests {
         let row = conn.query(query, ()).await.unwrap().next().await.unwrap();
 
         assert!(row.is_none());
+    }
+
+    #[tokio::test]
+    // Test a create with conflict
+    async fn create_with_conflict() {
+        let db = Builder::new_local(":memory:").build().await.unwrap();
+        let conn = db.connect().unwrap();
+        let store = LibsqlStore::new(conn.clone());
+        store.migrate().await.unwrap();
+
+        let data: HashMap<String, Value> =
+            HashMap::from_iter([("key", "value")].to_vec().iter().map(|(k, v)| {
+                (
+                    k.to_string(),
+                    serde_json::to_value(v).expect("Error encoding"),
+                )
+            }));
+
+        let mut session_record1 = Record {
+            id: Id::default(),
+            data,
+            expiry_date: OffsetDateTime::now_utc()
+                .checked_add(Duration::days(1))
+                .expect("Overflow making expiry"),
+        };
+        store
+            .create(&mut session_record1)
+            .await
+            .expect("Error saving session");
+
+        let mut session_record2 = session_record1.clone();
+        store
+            .create(&mut session_record2)
+            .await
+            .expect("Error saving session");
+
+        let loaded1 = store
+            .load(&session_record1.id)
+            .await
+            .expect("Error loading")
+            .expect("Value missing");
+
+        let loaded2 = store
+            .load(&session_record2.id)
+            .await
+            .expect("Error loading")
+            .expect("Value missing");
+
+        assert_eq!(
+            loaded1.data, loaded2.data,
+            "Session created with dumplcate data"
+        );
+        assert_ne!(
+            loaded1.id, loaded2.id,
+            "Session conflict on id generates a new id"
+        );
     }
 
     #[tokio::test]

@@ -1970,7 +1970,7 @@ dependencies = [
 
 [[package]]
 name = "tower-sessions-libsql-store"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.4",

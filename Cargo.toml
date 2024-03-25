@@ -1,6 +1,6 @@
 [package]
 name = "tower-sessions-libsql-store"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["Mike Worthley <mike@daybowbow.dev>"]
 license = "MIT"

@@ -1,5 +1,4 @@
 #![doc = include_str!("../README.md")]
-use std::ops::Deref;
 
 use async_trait::async_trait;
 use libsql::params;
@@ -96,6 +95,7 @@ impl LibsqlStore {
         Ok(())
     }
 
+    /// Checks exitence of the ID. Helps ensure unique values in edge cases.
     async fn id_exists(&self, conn: &libsql::Connection, id: &Id) -> session_store::Result<bool> {
         let query = format!(
             r#"
@@ -119,6 +119,7 @@ impl LibsqlStore {
         Ok(res == libsql::Value::Integer(1))
     }
 
+    /// Save results to DB
     async fn save_with_conn(
         &self,
         conn: &libsql::Connection,
@@ -170,15 +171,12 @@ impl ExpiredDeletion for LibsqlStore {
 #[async_trait]
 impl SessionStore for LibsqlStore {
     async fn create(&self, record: &mut Record) -> session_store::Result<()> {
-        let tx = self.connection.transaction().await.unwrap();
-
-        while self.id_exists(tx.deref(), &record.id).await? {
+        while self.id_exists(&self.connection, &record.id).await? {
             record.id = Id::default() // Generate a new id
         }
 
-        self.save_with_conn(tx.deref(), record).await?;
-
-        tx.commit().await.map_err(LibsqlStoreError::Libsql)?;
+        let conn = self.connection.clone();
+        self.save_with_conn(&conn, record).await?;
 
         Ok(())
     }
